@@ -68,18 +68,16 @@
             white-space: nowrap;
         }
 
-        /* Royal Blue background with Red text for active states */
         .nav-btn.active { background-color: #4169E1 !important; color: #FF0000 !important; }
 
-        /* --- PAGE LAYOUT --- */
+        /* --- PAGE LAYOUT & VIDEO BG --- */
         .page {
             width: 100%; min-height: 100vh; background-size: cover; background-position: center;
             position: relative; display: flex; flex-direction: column; align-items: center;
             padding: 120px 20px 80px 20px;
-            overflow: hidden; /* Ensures video doesn't bleed out */
+            overflow: hidden; 
         }
 
-        /* Video Background CSS */
         .bg-video {
             position: absolute;
             top: 50%; left: 50%;
@@ -131,9 +129,9 @@
         .dot { width: 8px; height: 8px; background: rgba(255,255,255,0.3); border-radius: 50%; transition: 0.3s; }
         .dot.active { background: #ffeb64; transform: scale(1.2); }
 
-        /* Backgrounds */
-        #page1 { background-image: url('images/page1.jpg'); } /* Fallback */
-        #page2 { background-image: url('https://raw.githubusercontent.com/newhdfilms/the-conduit-collective/main/images/page2.jpg'); }
+        /* Fallback Backgrounds */
+        #page1 { background-image: url('images/page1.jpg'); }
+        #page2 { background-image: url('images/page2.jpg'); }
         #page3 { background-image: url('https://raw.githubusercontent.com/newhdfilms/the-conduit-collective/main/images/page3.jpg'); }
         #page4 { background-image: url('https://raw.githubusercontent.com/newhdfilms/the-conduit-collective/main/images/page4.jpg'); }
         #page5 { background-image: url('https://raw.githubusercontent.com/newhdfilms/the-conduit-collective/main/images/page5.jpg'); justify-content: center; }
@@ -167,12 +165,14 @@
         <video autoplay muted loop playsinline class="bg-video">
             <source src="images/page1.mp4" type="video/mp4">
         </video>
-        
         <h1 class="headline">The Future of Advertising<br>has Arrived</h1>
         <div class="body-text">The Conduit Collective is the Next Generation Digital Advertising Agency. Mobility Focused, powered by CAD-based Digital Twins, integrated into Real Time Configurators, and driven by Generative AI.</div>
     </section>
 
     <section id="page2" class="page">
+        <video autoplay muted loop playsinline class="bg-video">
+            <source src="images/page2.mp4" type="video/mp4">
+        </video>
         <h1 class="headline">One Configurator<br>Every Use Case</h1>
         <div class="body-text">Our process begins with Production Accurate CAD data, transformed into a High Fidelity Digital Twin and deployed within a Real Time Configurator. This single system supports internal Product Validation, high-end Creative Development, and downstream AI LoRA Model Training.</div>
     </section>
@@ -212,7 +212,15 @@
 
     <section id="page5" class="page">
         <h1 class="headline">Let's Connect</h1>
-        </section>
+        <div class="contact-container">
+            <form id="contactForm">
+                <div class="form-group"><label>Name *</label><input type="text" required placeholder="Full Name"></div>
+                <div class="form-group"><label>Email *</label><input type="email" required placeholder="Email Address"></div>
+                <div class="form-group"><label>Message *</label><textarea rows="5" required placeholder="Your Message"></textarea></div>
+                <button type="submit" class="submit-btn">Send Message</button>
+            </form>
+        </div>
+    </section>
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
