@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Conduit Collective</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            background-color: #000;
+        }
+
+        body.intro-active { overflow: hidden; }
+
+        /* --- TRANSLUCENT INTRO OVERLAY --- */
+        #intro-overlay {
+            position: fixed;
+            top: 0; left: 0; 
+            width: 100vw; height: 100vh;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.75); 
+            backdrop-filter: blur(15px);
+            transition: opacity 1.2s ease-in-out;
+        }
+        .video-wrapper { position: relative; width: 100%; max-width: 900px; aspect-ratio: 16 / 9; background: #fff; box-shadow: 0 20px 50px rgba(0,0,0,0.1); }
+        #player { width: 100%; height: 100%; pointer-events: none; border: none; }
+        .intro-controls { margin-top: 30px; display: flex; gap: 15px; z-index: 10000; }
+        .intro-btn {
+            background-color: #000; color: #fff; border: none; padding: 12px 24px; border-radius: 50px;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: 0.3s; text-transform: uppercase;
+        }
+        .intro-btn:hover { background-color: #ffeb64; color: #000; }
+        .intro-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        
+        /* --- NEW 3-BUTTON NAVIGATION & DROPDOWN --- */
+        .nav-container {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; display: flex; gap: 8px; 
+            width: auto; padding: 10px;
+        }
+        .nav-btn {
+            background-color: rgba(255, 255, 255, 0.9); color: black; border: none;
+            padding: 10px 20px; border-radius: 50px; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; transition: 0.3s; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            white-space: nowrap;
+        }
+        /* Royal Blue / Red Highlight */
+        .nav-btn.active { background-color: #4169E1; color: #FF0000; }
+
+        /* Dropdown Menu Styling */
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-content {
+            display: none; position: absolute; top: 110%; left: 0;
+            background-color: rgba(255, 255, 255, 0.95); min-width: 160px;
+            box-shadow: 0px 8px 16px rgba(0,0,0,0.2); border-radius: 15px;
+            overflow: hidden; z-index: 1001;
+        }
+        .dropdown-content button {
+            width: 100%; padding: 12px 16px; border: none; background: none;
+            text-align: left; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+            transition: 0.2s; border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .dropdown-content button:hover { background-color: #4169E1; color: white; }
+        .dropdown:hover .dropdown-content { display: block; }
+
+        /* --- PAGE LAYOUT --- */
+        .page {
+            width: 100%; min-height: 100vh; background-size: cover; background-position: center;
+            position: relative; display: flex; flex-direction: column; align-items: center;
+            padding: 120px 20px 80px 20px;
+        }
+        .headline {
+            text-align: center; color: white; font-size: clamp(1.8rem, 5vw, 3.2rem);
+            font-weight: bold; text-shadow: 0 4px 10px rgba(0,0,0,0.8); 
+            margin-bottom: auto; z-index: 10;
+        }
+        .body-text {
+            color: white; font-size: 1.1rem; line-height: 1.7; text-align: center;
+            max-width: 950px; padding: 30px 50px; 
+            background-color: rgba(0, 0, 0, 0.25); 
+            border-radius: 20px; backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255,255,255,0.15);
+            z-index: 10;
+        }
+
+        /* --- PAGE 3 SPIDER OVERLAY --- */
+        #page3 { z-index: 1; }
+        #page3::after {
+            content: "";
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('images/page_3_Spider.png');
+            background-size: contain; background-repeat: no-repeat; background-position: center;
+            pointer-events: none; z-index: 2; opacity: 0.8;
+        }
+
+        /* --- REELS CAROUSELS --- */
+        .reels-section { background-color: #050505; justify-content: flex-start !important; }
+        .carousel-wrapper { width: 100%; max-width: 1400px; margin-bottom: 40px; position: relative; z-index: 10; }
+        .carousel-track {
+            display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 20px; padding: 10px 0;
+            scrollbar-width: none; scroll-snap-type: x mandatory;
+        }
+        .carousel-track::-webkit-scrollbar { display: none; }
+        .reel-item {
+            flex: 0 0 85%; scroll-snap-align: center;
+            background: rgba(255,255,255,0.05); border-radius: 15px; padding: 10px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        @media (min-width: 900px) { .reel-item { flex: 0 0 500px; } }
+        .reel-item iframe { width: 100%; aspect-ratio: 16/9; border-radius: 10px; border: none; }
+        .reel-label { color: #ffeb64; font-size: 0.75rem; font-weight: bold; margin-top: 10px; text-align: center; text-transform: uppercase; }
+        .carousel-dots { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+        .dot { width: 8px; height: 8px; background: rgba(255,255,255,0.3); border-radius: 50%; transition: 0.3s; }
+        .dot.active { background: #ffeb64; transform: scale(1.2); }
+
+        /* --- CONTACT FORM --- */
+        .contact-container {
+            width: 100%; max-width: 550px; background-color: rgba(0, 0, 0, 0.25); 
+            padding: 30px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; color: white; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600; }
+        .form-group input, .form-group textarea {
+            width: 100%; padding: 15px; border-radius: 10px; border: none; background: rgba(255,255,255,0.95); font-size: 1rem;
+        }
+        .submit-btn {
+            width: 100%; padding: 18px; background: #ffeb64; border: none; border-radius: 10px; 
+            font-weight: bold; cursor: pointer; font-size: 1.1rem; transition: 0.3s;
+        }
+
+        #page1 { background-image: url('https://raw.githubusercontent.com/newhdfilms/the-conduit-collective/main/images/page1.jpg'); }
+        #page2 { background-image: url('https://raw.githubusercontent.com/newhdfilms/the-conduit-collective/main/images/page2.jpg'); }
+        #page3 { background-image: url('https://raw.githubusercontent.com/newhdfilms/the-conduit-collective/main/images/page3.jpg'); }
+        #page4 { background-image: url('https://raw.githubusercontent.com/newhdfilms/the-conduit-collective/main/images/page4.jpg'); }
+        #page5 { background-image: url('https://raw.githubusercontent.com/newhdfilms/the-conduit-collective/main/images/page5.jpg'); justify-content: center; }
+    </style>
+</head>
+<body class="intro-active">
+
+    <div id="intro-overlay">
+        <div class="video-wrapper"><div id="player"></div></div>
+        <div class="intro-controls">
+            <button class="intro-btn" id="mute-btn" onclick="toggleMute()">🔊 Play Audio</button>
+            <button class="intro-btn" onclick="dismissIntro()">Skip Intro</button>
+        </div>
+    </div>
+
+    <div class="nav-container">
+        <div class="dropdown">
+            <button class="nav-btn" id="process-btn">Process ▾</button>
+            <div class="dropdown-content">
+                <button onclick="scrollToPage('page1')">About</button>
+                <button onclick="scrollToPage('page2')">Configurator</button>
+                <button onclick="scrollToPage('page3')">Media</button>
+                <button onclick="scrollToPage('page4')">Metrics</button>
+                <button onclick="scrollToPage('reels')">Reels</button>
+                <button onclick="scrollToPage('page5')">Contact</button>
+            </div>
+        </div>
+        <button class="nav-btn" id="reels-nav" onclick="scrollToPage('reels', this)">Reels</button>
+        <button class="nav-btn" id="contact-nav" onclick="scrollToPage('page5', this)">Contact</button>
+    </div>
+
+    <section id="page1" class="page">
+        <h1 class="headline">The Future of Advertising<br>has Arrived</h1>
+        <div class="body-text">The Conduit Collective is the Next Generation Digital Advertising Agency. Mobility Focused, powered by CAD-based Digital Twins, integrated into Real Time Configurators, and driven by Generative AI.</div>
+    </section>
+
+    <section id="page2" class="page">
+        <h1 class="headline">One Configurator<br>Every Use Case</h1>
+        <div class="body-text">Our process begins with Production Accurate CAD data, transformed into a High Fidelity Digital Twin and deployed within a Real Time Configurator. This single system supports internal Product Validation, high-end Creative Development, and downstream AI LoRA Model Training.</div>
+    </section>
+
+    <section id="page3" class="page">
+        <h1 class="headline">State of the Art<br>Generative AI Media</h1>
+        <div class="body-text">Our configurator trains a Branded AI Model that produces and distributes Product-Accurate, Photorealistic Content across Every Media Channel from a Centralized Cloud. Unmatched Scalability and Speed to Market.</div>
+    </section>
+
+    <section id="page4" class="page">
+        <h1 class="headline">One Funnel, One Cloud:<br>Measurable Metrics</h1>
+        <div class="body-text">Every interaction from Awareness to Consideration, Connection to Conversion is generated, distributed, and measured from one Centralized Cloud, enabling Precise Attribution and Direct Correlation to Retail Outcomes.</div>
+    </section>
+
+    <section id="reels" class="page reels-section">
+        <h1 class="headline" style="margin-bottom: 40px;">AI Generated Reels</h1>
+        <div class="carousel-wrapper">
+            <div class="carousel-track" id="track1">
+                <div class="reel-item"><iframe src="https://www.youtube.com/embed/qMrQIKzTXWM" frameborder="0" allowfullscreen></iframe><div class="reel-label">Conduit Collective Reel</div></div>
+                <div class="reel-item"><iframe src="https://www.youtube.com/embed/Fa_qozZo8QU" frameborder="0" allowfullscreen></iframe><div class="reel-label">Save the Robots</div></div>
+                <div class="reel-item"><iframe src="https://www.youtube.com/embed/odTiZQI60fs" frameborder="0" allowfullscreen></iframe><div class="reel-label">Dogged Vine Winery</div></div>
+                <div class="reel-item"><iframe src="https://www.youtube.com/embed/o1Mif0xfzvU" frameborder="0" allowfullscreen></iframe><div class="reel-label">Dogged Vine Winery 2</div></div>
+            </div>
+            <div class="carousel-dots" id="dots1"></div>
+        </div>
+        <div class="carousel-wrapper">
+            <div class="carousel-track" id="track2">
+                <div class="reel-item"><iframe src="https://www.youtube.com/embed/trnBZc4eVPc" frameborder="0" allowfullscreen></iframe><div class="reel-label">Culture Pop Soda</div></div>
+                <div class="reel-item"><iframe src="https://www.youtube.com/embed/j5KvO62Nkak" frameborder="0" allowfullscreen></iframe><div class="reel-label">Scrubby the Bubble</div></div>
+                <div class="reel-item"><iframe src="https://www.youtube.com/embed/zossDzY27qk" frameborder="0" allowfullscreen></iframe><div class="reel-label">Gangsta Music Video</div></div>
+                <div class="reel-item"><iframe src="https://www.youtube.com/embed/QfGLgfSaT40" frameborder="0" allowfullscreen></iframe><div class="reel-label">Penn State Promo</div></div>
+                <div class="reel-item"><iframe src="https://www.youtube.com/embed/03kmgB702wk" frameborder="0" allowfullscreen></iframe><div class="reel-label">Clean Air Project</div></div>
+            </div>
+            <div class="carousel-dots" id="dots2"></div>
+        </div>
+    </section>
+
+    <section id="page5" class="page">
+        <h1 class="headline">Let's Connect</h1>
+        <div class="contact-container">
+            <form id="contactForm">
+                <div class="form-group"><label>Name *</label><input type="text" required placeholder="Full Name"></div>
+                <div class="form-group"><label>Email *</label><input type="email" required placeholder="Email Address"></div>
+                <div class="form-group"><label>Message *</label><textarea rows="5" required placeholder="Your Message"></textarea></div>
+                <button type="submit" class="submit-btn">Send Message</button>
+            </form>
+        </div>
+    </section>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        let player; const videoId = 'Cz7llVO6SUY';
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                videoId: videoId,
+                playerVars: { 'autoplay': 1, 'controls': 0, 'mute': 1, 'loop': 1, 'playlist': videoId, 'playsinline': 1 },
+                events: { 'onReady': (e) => e.target.playVideo() }
+            });
+        }
+        function toggleMute() {
+            const btn = document.getElementById('mute-btn');
+            if (player.isMuted()) { player.unMute(); btn.innerText = "🔇 Mute Audio"; }
+            else { player.mute(); btn.innerText = "🔊 Play Audio"; }
+        }
+        function dismissIntro() {
+            const overlay = document.getElementById('intro-overlay');
+            overlay.classList.add('intro-hidden');
+            document.body.classList.remove('intro-active');
+            setTimeout(() => { overlay.style.display = 'none'; player.pauseVideo(); }, 1200);
+        }
+        function scrollToPage(pageId, btn) {
+            if(!document.getElementById('intro-overlay').classList.contains('intro-hidden')) dismissIntro();
+            document.getElementById(pageId).scrollIntoView({ behavior: 'smooth' });
+            
+            // Highlight logic
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            if(btn) {
+                btn.classList.add('active');
+            } else if (pageId === 'reels') {
+                document.getElementById('reels-nav').classList.add('active');
+            } else if (pageId === 'page5') {
+                document.getElementById('contact-nav').classList.add('active');
+            } else {
+                document.getElementById('process-btn').classList.add('active');
+            }
+        }
+        function setupDots(trackId, dotsId) {
+            const track = document.getElementById(trackId);
+            const dotsContainer = document.getElementById(dotsId);
+            const items = track.querySelectorAll('.reel-item');
+            items.forEach((_, i) => {
+                const dot = document.createElement('div');
+                dot.classList.add('dot');
+                if(i === 0) dot.classList.add('active');
+                dotsContainer.appendChild(dot);
+            });
+            track.addEventListener('scroll', () => {
+                const index = Math.round(track.scrollLeft / (items[0].offsetWidth + 20));
+                const dots = dotsContainer.querySelectorAll('.dot');
+                dots.forEach((d, i) => d.classList.toggle('active', i === index));
+            });
+        }
+        setupDots('track1', 'dots1');
+        setupDots('track2', 'dots2');
+    </script>
+</body>
+</html>
